@@ -4,11 +4,10 @@ from concurrent.futures import ThreadPoolExecutor
 
 class Command:
     def __init__(self, task):
-        self.script = task['script']
-        self.timeout = task.get('timeout', 30)
         self.task = task
+        self.executor = ThreadPoolExecutor(max_workers=1)
 
-    def run(self):
+    def __run(self):
         with Popen(['/bin/bash', '-l', '-c', self.script],
                    stdout=PIPE,
                    stderr=STDOUT,
@@ -17,3 +16,6 @@ class Command:
             out, _ = proc.communicate()
             self.task['code'] = code
             self.task['output'] = out
+
+    def run(self):
+        self.executor.submit(self.__run)
