@@ -3,6 +3,7 @@ import datetime
 import socket
 import logging
 import struct
+import threading
 from .command import Command
 
 __version__ = '0.0.1'
@@ -11,8 +12,9 @@ __version__ = '0.0.1'
 class Agent:
     def __init__(self, master):
         self.master = master
-        self.task = {}
+        self.tasks = {}
         self.so = None
+        self.event = threading.Event()
 
     def connect(self):
         self.so = socket.socket()
@@ -24,14 +26,10 @@ class Agent:
         return struct.pack('<l{}s'.format(length), length, buf)
 
     def heartbeat(self):
-        """
-        当前时间，版本，正在运行的任务
-        :return: 
-        """
         data = {
             'version'  : __version__,
             'timestamp': datetime.datetime.now().timestamp(),
-            'task'     : self.task.get('current')
+            'task'     : self.tasks.get('current')
         }
         try:
             self.so.send(json.dumps(data).encode())
@@ -40,10 +38,21 @@ class Agent:
                 length, _ = struct.unpack('<l', buf)
                 buf = self.so.recv(length)
                 data, _ = struct.unpack('<{}s'.format(length), buf)
-                data = json.loads(data.decode())
-                cmd = Command(data)
-                cmd.run()
+                task = json.loads(data.decode())
+                cmd = Command(task)
+                future = cmd.run()
+                if future is not None:
+                    future.add_done_callback(lambda: self.tasks.pop('current', None))
+                self.tasks['current'] = task
 
         except Exception as e:
             logging.error('send heartbeat err:{}'.format(e))
             self.connect()
+
+    def start(self):
+        while not self.event.is_set():
+            self.heartbeat()
+            self.event.wait(1)
+
+    def shutdown(self):
+        self.event.set()

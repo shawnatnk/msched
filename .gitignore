@@ -1,3 +1,4 @@
 *.pyc
 .ieda
 __pycache__
+.gitignore

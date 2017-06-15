@@ -1,7 +1,6 @@
 from subprocess import Popen, PIPE, STDOUT
 from concurrent.futures import ThreadPoolExecutor
 from threading import Event
-import os
 
 
 class Command:
@@ -26,4 +25,4 @@ class Command:
 
     def run(self):
         if not self.event.is_set():
-            self.executor.submit(self.__run)
+            return self.executor.submit(self.__run)
