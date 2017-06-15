@@ -1,6 +1,7 @@
 from subprocess import Popen, PIPE, STDOUT
 from concurrent.futures import ThreadPoolExecutor
 from threading import Event
+import os
 
 
 class Command:
