@@ -12,7 +12,7 @@ __version__ = '0.0.1'
 class Agent:
     def __init__(self, master):
         self.master = master
-        self.tasks = {}
+        self.tasks = {} # GIL 内置数据结构，线程安全？？
         self.so = None
         self.event = threading.Event()
 
