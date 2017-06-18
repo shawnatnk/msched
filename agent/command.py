@@ -13,11 +13,11 @@ class Command:
 
     def __run(self):
         self.event.set()
-        with Popen(['/bin/bash', '-l', '-c', self.script],
+        with Popen(['/bin/bash', '-l', '-c', self.task['script']],
                    stdout=PIPE,
                    stderr=STDOUT,
                    start_new_session=True) as proc:
-            code = proc.wait(self.timeout)
+            code = proc.wait(self.task['timeout'])
             out, _ = proc.communicate()
             self.task['code'] = code
             self.task['output'] = out

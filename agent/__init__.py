@@ -5,14 +5,21 @@ import logging
 import struct
 import threading
 from .command import Command
+import os
 
 __version__ = '0.0.1'
+
+
+def encode(data):
+    buf = json.dumps(data).encode()
+    length = len(buf)
+    return struct.pack('<l{}s'.format(length), length, buf)
 
 
 class Agent:
     def __init__(self, master):
         self.master = master
-        self.tasks = {} # GIL 内置数据结构，线程安全？？
+        self.tasks = {}  # GIL 内置数据结构，线程安全？？
         self.so = None
         self.event = threading.Event()
 
@@ -20,22 +27,18 @@ class Agent:
         self.so = socket.socket()
         self.so.connect(self.master)
 
-    def encode(self, data):
-        buf = json.dumps(data).encode()
-        length = len(buf)
-        return struct.pack('<l{}s'.format(length), length, buf)
-
     def heartbeat(self):
         data = {
+            'id'       : os.uname().nodename,
             'version'  : __version__,
             'timestamp': datetime.datetime.now().timestamp(),
             'task'     : self.tasks.get('current')
         }
         try:
-            self.so.send(json.dumps(data).encode())
+            self.so.send(encode(data))
             if data.get('task') is None:
                 buf = self.so.recv(4)
-                length, _ = struct.unpack('<l', buf)
+                length, *_ = struct.unpack('<l', buf)
                 buf = self.so.recv(length)
                 data, _ = struct.unpack('<{}s'.format(length), buf)
                 task = json.loads(data.decode())
