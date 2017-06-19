@@ -8,7 +8,7 @@ client = KazooClient(hosts='127.0.0.1:2181')
 client.start()
 
 
-# client.create('/guoxx')
+client.create('/guoxx')
 # client.create('/guoxx/t1', value=b"hello zk")
 # client.ensure_path('/guoxx/1/2')
 #
